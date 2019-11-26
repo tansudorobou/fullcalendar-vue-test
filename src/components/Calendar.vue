@@ -17,7 +17,9 @@
       locale="ja"
       editable="true"
       selectable="true"
-      @select="addData"
+      @select="select"
+      @eventDrop="eventDrop"
+      @eventResize="eventResize"
       :visibleRange="visibleRange"
     />
   </div>
@@ -28,6 +30,8 @@ import FullCalendar from "@fullcalendar/vue";
 import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import interactionPlugin from "@fullcalendar/interaction";
 import bootstrapPlugin from "@fullcalendar/bootstrap";
+// import { mapState } from "vuex";
+import store from "../store.js";
 
 import moment from "moment";
 moment.locale("ja");
@@ -50,7 +54,7 @@ export default {
         left: "title",
         center: "",
         right:
-          "today prev, next resourceTimelineYear,resourceTimelineMonth,resourceTimelineWeek,resourceTimelineDay"
+          "today prev, next resourceTimelineYear,resourceTimelineMonth,resourceTimelineWeek"
       },
       visibleRange: { start: "2019-11-20", end: "2020-05-01" },
       resourceGroupField: "groupId",
@@ -72,58 +76,48 @@ export default {
         { groupId: "着日", id: "14", title: "実績", eventColor: "#ff8246" }
       ],
       events: [
-        {
-          start: "2019-11-19T10:50:04",
-          end: "2019-11-25T18:18:31",
-          id: 9214,
-          resourceId: 1,
-          status: 1,
-          title: 9214
-        },
-        {
-          start: "2019-11-19T10:50:04",
-          end: "2019-11-25T18:18:31",
-          resourceId: 2,
-          id: 9214,
-          plan_qty: 200000,
-          progress: 0.09,
-          result_qty: 18000,
-          status: 1,
-          title: 9214
-        },
-        {
-          start: "2019-11-25T10:50:04",
-          end: "2019-11-28T18:18:31",
-          resourceId: 3,
-          id: 9214,
-          plan_qty: 200000,
-          progress: 0.09,
-          result_qty: 18000,
-          status: 1,
-          title: 9214
-        },
-        {
-          start: "2019-11-25T10:50:04",
-          end: "2019-11-28T18:18:31",
-          resourceId: 4,
-          id: 9214,
-          plan_qty: 200000,
-          progress: 0.09,
-          result_qty: 18000,
-          status: 1,
-          title: 9214
-        }
-      ]
+        store.state.flow1,
+        store.state.flow2,
+        store.state.mold1,
+        store.state.mold2
+      ],
+      event: []
     };
   },
   methods: {
-    addData(arg) {
-      this.events.push({
-        title: 9999,
-        start: arg.start,
-        end: arg.end,
-        resourceId: 3
-      });
+    select(selectioninfo) {
+      if (confirm("追加しますか?")) {
+        this.events.push({
+          title: moment(selectioninfo.end).diff(selectioninfo.start, "days"),
+          start: selectioninfo.start,
+          end: selectioninfo.end,
+          resourceId: selectioninfo.resource.id
+        });
+      }
+    },
+    eventDrop(info) {
+      if (!confirm("変更しても構いませんか?")) {
+        info.revert();
+      } else {
+        store.commit("drop", info);
+        // store.state.flow1.push({
+        //   title: moment(info.event.end).diff(info.event.start, "days") + 1,
+        //   start: info.event.start,
+        //   end: info.event.end,
+        //   resourceId: info.event._def.resourceIds[0]
+      }
+    },
+    eventResize(info) {
+      if (!confirm("変更しても構いませんか?")) {
+        info.revert();
+      } else {
+        this.events.push({
+          title: moment(info.event.end).diff(info.event.start, "days") + 1,
+          start: info.event.start,
+          end: info.event.end,
+          resourceId: info.event._def.resourceIds[0]
+        });
+      }
     }
   }
 };
