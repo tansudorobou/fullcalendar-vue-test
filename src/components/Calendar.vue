@@ -1,6 +1,7 @@
 <template>
   <div>
-    <div class="title_font">00001{{events}}</div>
+    <button @click="save" class="btn btn-primary">保存</button>
+    <div class="title_font">{{events[0].itemName}}</div>
     <FullCalendar
       :plugins="calendarCustomize.plugins"
       :events="events"
@@ -12,9 +13,11 @@
       :height="calendarCustomize.height"
       :header="header"
       :resources="resources"
-      resourceAreaWidth="15%"
+      :slotLabelFormat="slotLabelFormat"
+      resourceAreaWidth="10%"
+      slotWidth="45"
       :slotDuration="calendarCustomize.slotDuration"
-      locale="ja"
+      locale="en"
       editable="true"
       selectable="true"
       @select="select"
@@ -32,6 +35,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import bootstrapPlugin from "@fullcalendar/bootstrap";
 // import { mapState } from "vuex";
 import store from "../store.js";
+import axios from "axios";
 
 import moment from "moment";
 moment.locale("ja");
@@ -53,9 +57,13 @@ export default {
       header: {
         left: "title",
         center: "",
-        right:
-          "today prev, next resourceTimelineYear,resourceTimelineMonth,resourceTimelineWeek"
+        right: ""
       },
+      slotLabelFormat: [
+        { month: "long", year: "numeric" },
+        { weekday: "short" },
+        { day: "numeric" }
+      ],
       visibleRange: { start: "2019-11-20", end: "2020-05-01" },
       resourceGroupField: "groupId",
       resourceColumns: [{ labelText: "工程", field: "title" }],
@@ -75,13 +83,7 @@ export default {
         { groupId: "着日", id: "13", title: "計画", eventColor: "#6fc2d0" },
         { groupId: "着日", id: "14", title: "実績", eventColor: "#ff8246" }
       ],
-      events: [
-        store.state.flow1,
-        store.state.flow2,
-        store.state.mold1,
-        store.state.mold2
-      ],
-      event: []
+      events: ""
     };
   },
   methods: {
@@ -111,14 +113,16 @@ export default {
       if (!confirm("変更しても構いませんか?")) {
         info.revert();
       } else {
-        this.events.push({
-          title: moment(info.event.end).diff(info.event.start, "days") + 1,
-          start: info.event.start,
-          end: info.event.end,
-          resourceId: info.event._def.resourceIds[0]
-        });
+        store.commit("resize", info);
       }
+    },
+    save: function() {
+      axios.post("http://127.0.0.1:5000/api", this.events);
     }
+  },
+  async created() {
+    await store.dispatch("getItems");
+    this.events = store.state.items.items;
   }
 };
 </script>
@@ -133,5 +137,14 @@ div {
   &.title_font {
     font-size: 30px;
   }
+}
+.fc-sun {
+  background-color: #eeeeee;
+}
+.fc-sat {
+  background-color: #eeeeee;
+}
+.fc-cell-content {
+  background-color: #ffffff;
 }
 </style>
